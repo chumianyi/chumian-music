@@ -21,20 +21,16 @@ jobs:
         run: |
           MF=android/app/src/main/AndroidManifest.xml
           GR=android/app/build.gradle.kts
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
           sed -i 's/android:label="[^"]*"/android:label="chumian_music"/' $MF
           sed -i 's/^[[:space:]]*minSdk = .*/        minSdk = 24/' $GR
           sed -i 's/applicationId = "[^"]*"/applicationId = "com.chumian.music"/' $GR
-          # Add kotlinOptions to app module
-          if ! grep -q kotlinOptions $GR; then
-            sed -i '/^}/i\    kotlinOptions {\n        jvmTarget = "1.8"\n    }' $GR
-          fi
       - name: Fix plugins
         run: |
           flutter pub get
