@@ -49,10 +49,10 @@ class MusicProvider extends ChangeNotifier {
     isSearching = false; notifyListeners();
   }
   Future<void> playSong(Song song, {List<Song>? playlist}) async {
-    if (song.isOnline && song.url.isEmpty) {
+    if (song.isOnline && (song.url == null || song.url!.isEmpty)) {
       final url = await _onlineService.getSongUrl(song.id);
       if (url != null && url.isNotEmpty) {
-        song = Song(id: song.id, title: song.title, artist: song.artist, album: song.album, albumArt: song.albumArt, url: url, duration: song.duration, isOnline: true);
+        song = Song(id: song.id, title: song.title, artist: song.artist, album: song.album, coverUrl: song.coverUrl, url: url, duration: song.duration, isOnline: true);
       } else return;
     }
     await audioHandler.playSong(song, playlist: playlist);

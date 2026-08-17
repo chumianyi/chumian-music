@@ -24,7 +24,13 @@ class MusicAudioHandler extends BaseAudioHandler {
   Future<void> _playCurrent() async {
     if (_currentIndex < 0 || _currentIndex >= _queue.length) return;
     final song = _queue[_currentIndex];
-    try { if (song.url.isNotEmpty) { await _player.setUrl(song.url); await _player.play(); } } catch (_) {}
+    try {
+      final url = song.url ?? song.filePath;
+      if (url != null && url.isNotEmpty) {
+        await _player.setUrl(url);
+        await _player.play();
+      }
+    } catch (_) {}
   }
   Future<void> seekRelative(int seconds) async {
     final pos = _player.position + Duration(seconds: seconds);

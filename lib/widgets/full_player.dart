@@ -12,7 +12,7 @@ class FullPlayer extends StatelessWidget {
       child: SafeArea(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.textSecondary.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 24),
-        RotatingAlbum(song: s, size: 220, isPlaying: p.isPlaying),
+        RotatingAlbum(song: s, size: 220, playing: p.isPlaying),
         const SizedBox(height: 32),
         Text(s?.title ?? '未在播放', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
         const SizedBox(height: 8),
