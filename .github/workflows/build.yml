@@ -6,10 +6,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: {java-version: '17', distribution: 'temurin'}
+        with: {java-version: "17", distribution: "temurin"}
       - uses: subosito/flutter-action@v2
-        with: {flutter-version: '3.44.9', channel: 'stable'}
+        with: {flutter-version: "3.44.9", channel: "stable"}
       - run: flutter create . --platforms android --org com.chumian --project-name chumian_music
+      - run: find . -name "build.gradle.kts" -delete
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
