@@ -19,19 +19,21 @@ jobs:
           flutter create . --platforms android --org com.chumian --project-name chumian_music
       - name: Apply custom Android config
         run: |
-          # Add permissions to AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' android/app/src/main/AndroidManifest.xml
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          GRADLE=android/app/build.gradle.kts
+          # Add permissions
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MANIFEST
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MANIFEST
           # Set app label
-          sed -i 's/android:label="[^"]*"/android:label="初眠音乐"/' android/app/src/main/AndroidManifest.xml
-          # Set minSdk and applicationId
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 24/' android/app/build.gradle
-          sed -i 's/applicationId "[^"]*"/applicationId "com.chumian.music"/' android/app/build.gradle
+          sed -i 's/android:label="[^"]*"/android:label="初眠音乐"/' $MANIFEST
+          # Set minSdk and applicationId (Kotlin DSL)
+          sed -i 's/minSdk = [0-9]*/minSdk = 24/' $GRADLE
+          sed -i 's/applicationId = "[^"]*"/applicationId = "com.chumian.music"/' $GRADLE
       - name: Build APK
         run: |
           flutter pub get
