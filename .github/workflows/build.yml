@@ -21,31 +21,23 @@ jobs:
         run: |
           MF=android/app/src/main/AndroidManifest.xml
           GR=android/app/build.gradle.kts
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
-          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
+          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
           sed -i 's/android:label="[^"]*"/android:label="chumian_music"/' $MF
           sed -i 's/^[[:space:]]*minSdk = .*/        minSdk = 24/' $GR
           sed -i 's/applicationId = "[^"]*"/applicationId = "com.chumian.music"/' $GR
-      - name: Fix plugin namespaces
+      - name: Fix plugins
         run: |
           flutter pub get
-          # Fix on_audio_query_android missing namespace
-          find ~/.pub-cache -path "*/on_audio_query_android*/android/build.gradle" | while read f; do
-            if ! grep -q "namespace" "$f"; then
-              sed -i '0,/^android {/s//android {\n    namespace "com.onaudioquery"/' "$f"
-            fi
-          done
-          # Fix any other plugin missing namespace
-          find ~/.pub-cache -path "*/android/build.gradle" | while read f; do
-            if grep -q "^android {" "$f" && ! grep -q "namespace" "$f"; then
-              sed -i '0,/^android {/s//android {\n    namespace "com.plugin.fix"/' "$f"
-            fi
-          done
+          find ~/.pub-cache -path "*/android/build.gradle" -exec sh -c 'f="$1"; if grep -q "^android {" "$f" 2>/dev/null; then if ! grep -q namespace "$f"; then sed -i "0,/^android {/s//android {\n    namespace \"com.plugin.fix\"/" "$f"; fi; if ! grep -q kotlinOptions "$f"; then awk '/^android {/{f=1;d=0} f{if(/{/)d++;if(/}/){d--;if(d==0){print "    kotlinOptions {";print "        jvmTarget = \"1.8\"";print "    }";f=0}}} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"; fi; fi' _ {} \;
+          if ! grep -q kotlinOptions android/app/build.gradle.kts; then
+            sed -i '/^}/i\    kotlinOptions {\n        jvmTarget = "1.8"\n    }' android/app/build.gradle.kts
+          fi
       - name: Build APK
         run: flutter build apk --release
       - uses: actions/upload-artifact@v4
