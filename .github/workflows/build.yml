@@ -31,11 +31,23 @@ jobs:
           sed -i 's/android:label="[^"]*"/android:label="chumian_music"/' $MF
           sed -i 's/^[[:space:]]*minSdk = .*/        minSdk = 24/' $GR
           sed -i 's/applicationId = "[^"]*"/applicationId = "com.chumian.music"/' $GR
-          cat $GR
-      - name: Build APK
+      - name: Fix plugin namespaces
         run: |
           flutter pub get
-          flutter build apk --release --verbose
+          # Fix on_audio_query_android missing namespace
+          find ~/.pub-cache -path "*/on_audio_query_android*/android/build.gradle" | while read f; do
+            if ! grep -q "namespace" "$f"; then
+              sed -i '0,/^android {/s//android {\n    namespace "com.onaudioquery"/' "$f"
+            fi
+          done
+          # Fix any other plugin missing namespace
+          find ~/.pub-cache -path "*/android/build.gradle" | while read f; do
+            if grep -q "^android {" "$f" && ! grep -q "namespace" "$f"; then
+              sed -i '0,/^android {/s//android {\n    namespace "com.plugin.fix"/' "$f"
+            fi
+          done
+      - name: Build APK
+        run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: chumian-music-apk
