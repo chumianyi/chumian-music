@@ -4,11 +4,20 @@ import '../models/song.dart';
 class OnlineMusicService {
   final Dio _dio = Dio();
 
-  static const String _metingApi = 'https://api.injahow.cn/meting/';
-  static const String _neteaseApi = 'https://music.163.com/api';
+  static const String _apiBase = 'https://api.mnchen.cn/';
+  static const String _neteaseSearch = 'https://music.163.com/api';
 
-  // 云音乐热歌榜, 云音乐新歌榜
-  static const List<int> _hotPlaylists = [3778678, 3779629];
+  // 歌单分类: id -> 名称
+  static const Map<int, String> playlists = {
+    3778678: '热歌榜',
+    3779629: '新歌榜',
+    19723756: '飙升榜',
+    2884035: '原创榜',
+    71385702: 'ACG榜',
+    71382712: '摇滚榜',
+    71385007: '民谣榜',
+    71384707: '古典榜',
+  };
 
   Future<Response> _get(String url,
       {Map<String, dynamic>? params,
@@ -26,32 +35,35 @@ class OnlineMusicService {
         ));
   }
 
-  Future<List<Song>> getRecommendSongs() async {
-    for (final playlistId in _hotPlaylists) {
-      try {
-        final resp = await _get(_metingApi,
-            params: {'type': 'playlist', 'id': playlistId});
-        if (resp.statusCode == 200 && resp.data is List) {
-          final List data = resp.data;
-          if (data.isNotEmpty) {
-            return data.take(30).map((item) {
-              final id = _extractId(item['url'] ?? '');
-              return Song(
-                id: id.isNotEmpty ? id : (item['name'] ?? '').toString(),
-                title: item['name'] ?? '未知',
-                artist: item['artist'] ?? '未知',
-                album: playlistId == 3778678 ? '云音乐热歌榜' : '云音乐新歌榜',
-                coverUrl: item['pic'],
-                url: item['url'],
-                duration: Duration.zero,
-                isOnline: true,
-              );
-            }).toList();
-          }
+  Future<List<Song>> getPlaylistSongs(int playlistId) async {
+    try {
+      final resp = await _get(_apiBase,
+          params: {'server': 'netease', 'type': 'playlist', 'id': playlistId});
+      if (resp.statusCode == 200 && resp.data is List) {
+        final List data = resp.data;
+        if (data.isNotEmpty) {
+          return data.take(50).map((item) {
+            final id = _extractId(item['url'] ?? '');
+            return Song(
+              id: id.isNotEmpty ? id : (item['name'] ?? '').toString(),
+              title: item['name'] ?? '未知',
+              artist: item['artist'] ?? '未知',
+              album: playlists[playlistId] ?? '网易云',
+              coverUrl: item['pic'],
+              lyricsUrl: item['lrc'],
+              url: item['url'],
+              duration: Duration.zero,
+              isOnline: true,
+            );
+          }).toList();
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
     return [];
+  }
+
+  Future<List<Song>> getRecommendSongs() async {
+    return getPlaylistSongs(3778678);
   }
 
   String _extractId(String url) {
@@ -62,7 +74,7 @@ class OnlineMusicService {
   Future<List<Song>> searchSongs(String keyword) async {
     if (keyword.trim().isEmpty) return [];
     try {
-      final resp = await _get('$_neteaseApi/search/get',
+      final resp = await _get('$_neteaseSearch/search/get',
           params: {'s': keyword, 'type': 1, 'limit': 30});
       if (resp.statusCode == 200) {
         final data = resp.data;
@@ -81,6 +93,7 @@ class OnlineMusicService {
                   '未知',
               album: album?['name']?.toString() ?? '未知专辑',
               coverUrl: album?['picUrl']?.toString(),
+              lyricsUrl: '$_apiBase?server=netease&type=lrc&id=$id',
               url: '',
               duration: Duration(milliseconds: (s['duration'] ?? 0) as int),
               isOnline: true,
@@ -94,10 +107,43 @@ class OnlineMusicService {
 
   Future<String?> getSongUrl(String songId) async {
     try {
-      // Meting URL proxy returns 302 redirect to actual MP3
-      // just_audio (ExoPlayer) follows redirects automatically
-      return '$_metingApi?server=netease&type=url&id=$songId';
+      return '$_apiBase?server=netease&type=url&id=$songId';
     } catch (_) {}
     return null;
+  }
+
+  /// 获取并解析 LRC 歌词，返回 [(时间, 文本)] 列表
+  Future<List<MapEntry<Duration, String>>> getLyrics(String? lyricsUrl) async {
+    if (lyricsUrl == null || lyricsUrl.isEmpty) return [];
+    try {
+      final resp = await _get(lyricsUrl);
+      if (resp.statusCode == 200) {
+        return parseLrc(resp.data.toString());
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  List<MapEntry<Duration, String>> parseLrc(String lrc) {
+    final lines = <MapEntry<Duration, String>>[];
+    final regex = RegExp(r'\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)');
+    for (final line in lrc.split('\n')) {
+      final match = regex.firstMatch(line);
+      if (match != null) {
+        final minutes = int.parse(match.group(1)!);
+        final seconds = int.parse(match.group(2)!);
+        final msStr = match.group(3)!;
+        final ms = int.parse(msStr.padRight(3, '0').substring(0, 3));
+        final text = match.group(4)!.trim();
+        if (text.isNotEmpty) {
+          lines.add(MapEntry(
+            Duration(minutes: minutes, seconds: seconds, milliseconds: ms),
+            text,
+          ));
+        }
+      }
+    }
+    lines.sort((a, b) => a.key.compareTo(b.key));
+    return lines;
   }
 }

@@ -6,6 +6,7 @@ class Song {
   final Duration duration;
   final String? filePath;
   final String? coverUrl;
+  final String? lyricsUrl;
   final bool isOnline;
   final int? fileSize;
   final String? url;
@@ -18,12 +19,25 @@ class Song {
     required this.duration,
     this.filePath,
     this.coverUrl,
+    this.lyricsUrl,
     this.isOnline = false,
     this.fileSize,
     this.url,
   });
 
-  Song copyWith({String? id, String? title, String? artist, String? album, Duration? duration, String? filePath, String? coverUrl, bool? isOnline, int? fileSize, String? url}) {
+  Song copyWith({
+    String? id,
+    String? title,
+    String? artist,
+    String? album,
+    Duration? duration,
+    String? filePath,
+    String? coverUrl,
+    String? lyricsUrl,
+    bool? isOnline,
+    int? fileSize,
+    String? url,
+  }) {
     return Song(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -32,6 +46,7 @@ class Song {
       duration: duration ?? this.duration,
       filePath: filePath ?? this.filePath,
       coverUrl: coverUrl ?? this.coverUrl,
+      lyricsUrl: lyricsUrl ?? this.lyricsUrl,
       isOnline: isOnline ?? this.isOnline,
       fileSize: fileSize ?? this.fileSize,
       url: url ?? this.url,
