@@ -17,26 +17,24 @@ jobs:
         run: |
           rm -rf android/
           flutter create . --platforms android --org com.chumian --project-name chumian_music
-      - name: Patch manifest and gradle
+      - name: Patch Android config
         run: |
           MF=android/app/src/main/AndroidManifest.xml
           GR=android/app/build.gradle.kts
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
-          sed -i '/<manifest/a\\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>' $MF
+          sed -i '/<manifest/a\    <uses-permission android:name="android.permission.WAKE_LOCK"/>' $MF
           sed -i 's/android:label="[^"]*"/android:label="chumian_music"/' $MF
           sed -i 's/^[[:space:]]*minSdk = .*/        minSdk = 24/' $GR
           sed -i 's/applicationId = "[^"]*"/applicationId = "com.chumian.music"/' $GR
-      - name: Fix plugins
+      - name: Build APK
         run: |
           flutter pub get
-          python3 fix_plugins.py
-      - name: Build APK
-        run: flutter build apk --release
+          flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: chumian-music-apk
