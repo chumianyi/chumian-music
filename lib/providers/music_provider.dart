@@ -29,6 +29,7 @@ class MusicProvider extends ChangeNotifier {
   bool isLoadingLocal = false;
   bool isSearching = false;
   bool hasPermission = false;
+  String? onlineError;
 
   Song? get currentSong => audioHandler.currentSong;
   bool get isPlaying => audioHandler.isPlaying;
@@ -66,8 +67,12 @@ class MusicProvider extends ChangeNotifier {
     currentPlaylistId = id;
     currentPlaylistName = name;
     isLoadingOnline = true;
+    onlineError = null;
     notifyListeners();
     onlineSongs = await _onlineService.getPlaylistSongs(id);
+    if (onlineSongs.isEmpty) {
+      onlineError = _onlineService.lastError;
+    }
     isLoadingOnline = false;
     notifyListeners();
   }

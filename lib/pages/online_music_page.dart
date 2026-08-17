@@ -87,21 +87,45 @@ class OnlineMusicPage extends StatelessWidget {
                   child: CircularProgressIndicator(color: AppTheme.accentMint))
               : p.onlineSongs.isEmpty
                   ? Center(
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.cloud_off,
-                                size: 64, color: AppTheme.textSecondary),
-                            const SizedBox(height: 16),
-                            const Text('暂无在线音乐',
-                                style: TextStyle(
-                                    color: AppTheme.textSecondary)),
-                            const SizedBox(height: 12),
-                            NeuButton(
-                              onPressed: () => p.loadOnlineSongs(),
-                              child: const Text('重新加载'),
-                            ),
-                          ]),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.cloud_off,
+                                  size: 64, color: AppTheme.textSecondary),
+                              const SizedBox(height: 16),
+                              const Text('加载失败',
+                                  style: TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                              if (p.onlineError != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    p.onlineError!,
+                                    style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 12,
+                                        fontFamily: 'monospace'),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              NeuButton(
+                                onPressed: () => p.loadOnlineSongs(),
+                                child: const Text('重新加载'),
+                              ),
+                            ]),
+                      ),
                     )
                   : RefreshIndicator(
                       color: AppTheme.accentMint,

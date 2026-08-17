@@ -1,10 +1,25 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/song.dart';
 
 class OnlineMusicService {
-  final Dio _dio = Dio();
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
+    sendTimeout: const Duration(seconds: 15),
+    responseType: ResponseType.plain,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36',
+      'Accept': 'application/json, text/plain, */*',
+    },
+  ));
 
-  static const String _apiBase = 'https://api.mnchen.cn/';
+  // 多个 API 兜底
+  static const List<String> _apiBases = [
+    'https://api.mnchen.cn/',
+    'https://api.injahow.cn/meting/',
+  ];
+
   static const String _neteaseSearch = 'https://music.163.com/api';
 
   // 歌单分类: id -> 名称
@@ -19,30 +34,27 @@ class OnlineMusicService {
     71384707: '古典榜',
   };
 
-  Future<Response> _get(String url,
-      {Map<String, dynamic>? params,
-      Map<String, String>? headers}) async {
-    return await _dio.get(url,
-        queryParameters: params,
-        options: Options(
-          receiveTimeout: const Duration(seconds: 15),
-          sendTimeout: const Duration(seconds: 15),
-          headers: headers ??
-              {
-                'User-Agent': 'Mozilla/5.0',
-                'Referer': 'https://music.163.com/'
-              },
-        ));
+  String? lastError;
+
+  Future<dynamic> _getJson(String url,
+      {Map<String, dynamic>? params}) async {
+    final resp = await _dio.get(url, queryParameters: params);
+    if (resp.statusCode == 200) {
+      final body = resp.data.toString();
+      if (body.isEmpty) return null;
+      return jsonDecode(body);
+    }
+    throw Exception('HTTP ${resp.statusCode}');
   }
 
   Future<List<Song>> getPlaylistSongs(int playlistId) async {
-    try {
-      final resp = await _get(_apiBase,
-          params: {'server': 'netease', 'type': 'playlist', 'id': playlistId});
-      if (resp.statusCode == 200 && resp.data is List) {
-        final List data = resp.data;
-        if (data.isNotEmpty) {
-          return data.take(50).map((item) {
+    lastError = null;
+    for (final base in _apiBases) {
+      try {
+        final data = await _getJson(base,
+            params: {'server': 'netease', 'type': 'playlist', 'id': playlistId});
+        if (data is List && data.isNotEmpty) {
+          return data.take(50).map<Song>((item) {
             final id = _extractId(item['url'] ?? '');
             return Song(
               id: id.isNotEmpty ? id : (item['name'] ?? '').toString(),
@@ -57,8 +69,11 @@ class OnlineMusicService {
             );
           }).toList();
         }
+      } catch (e) {
+        lastError = '$base: $e';
+        continue;
       }
-    } catch (_) {}
+    }
     return [];
   }
 
@@ -73,50 +88,52 @@ class OnlineMusicService {
 
   Future<List<Song>> searchSongs(String keyword) async {
     if (keyword.trim().isEmpty) return [];
+    lastError = null;
     try {
-      final resp = await _get('$_neteaseSearch/search/get',
+      final data = await _getJson('$_neteaseSearch/search/get',
           params: {'s': keyword, 'type': 1, 'limit': 30});
-      if (resp.statusCode == 200) {
-        final data = resp.data;
-        if (data is Map && data['result'] is Map) {
-          final List songs = data['result']['songs'] ?? [];
-          return songs.map((s) {
-            final id = s['id']?.toString() ?? '';
-            final album = s['album'];
-            return Song(
-              id: id,
-              title: s['name'] ?? '未知',
-              artist: (s['artists'] as List?)
-                      ?.map((a) => a['name']?.toString() ?? '')
-                      .where((a) => a.isNotEmpty)
-                      .join('/') ??
-                  '未知',
-              album: album?['name']?.toString() ?? '未知专辑',
-              coverUrl: album?['picUrl']?.toString(),
-              lyricsUrl: '$_apiBase?server=netease&type=lrc&id=$id',
-              url: '',
-              duration: Duration(milliseconds: (s['duration'] ?? 0) as int),
-              isOnline: true,
-            );
-          }).toList();
-        }
+      if (data is Map && data['result'] is Map) {
+        final List songs = data['result']['songs'] ?? [];
+        return songs.map<Song>((s) {
+          final id = s['id']?.toString() ?? '';
+          final album = s['album'];
+          return Song(
+            id: id,
+            title: s['name'] ?? '未知',
+            artist: (s['artists'] as List?)
+                    ?.map((a) => a['name']?.toString() ?? '')
+                    .where((a) => a.isNotEmpty)
+                    .join('/') ??
+                '未知',
+            album: album?['name']?.toString() ?? '未知专辑',
+            coverUrl: album?['picUrl']?.toString(),
+            lyricsUrl: '${_apiBases[0]}?server=netease&type=lrc&id=$id',
+            url: '',
+            duration: Duration(milliseconds: (s['duration'] ?? 0) as int),
+            isOnline: true,
+          );
+        }).toList();
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError = 'search: $e';
+    }
     return [];
   }
 
   Future<String?> getSongUrl(String songId) async {
-    try {
-      return '$_apiBase?server=netease&type=url&id=$songId';
-    } catch (_) {}
+    for (final base in _apiBases) {
+      try {
+        return '$base?server=netease&type=url&id=$songId';
+      } catch (_) {}
+    }
     return null;
   }
 
-  /// 获取并解析 LRC 歌词，返回 [(时间, 文本)] 列表
+  /// 获取并解析 LRC 歌词
   Future<List<MapEntry<Duration, String>>> getLyrics(String? lyricsUrl) async {
     if (lyricsUrl == null || lyricsUrl.isEmpty) return [];
     try {
-      final resp = await _get(lyricsUrl);
+      final resp = await _dio.get(lyricsUrl);
       if (resp.statusCode == 200) {
         return parseLrc(resp.data.toString());
       }
