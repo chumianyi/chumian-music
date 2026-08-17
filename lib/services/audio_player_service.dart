@@ -44,7 +44,7 @@ class MusicAudioHandler extends BaseAudioHandler {
       controls: [MediaControl.skipToPrevious, if (state.playing) MediaControl.pause else MediaControl.play, MediaControl.skipToNext],
       systemActions: const {MediaAction.seek, MediaAction.seekForward, MediaAction.seekBackward},
       processingState: const {ProcessingState.idle: AudioProcessingState.idle, ProcessingState.loading: AudioProcessingState.loading, ProcessingState.buffering: AudioProcessingState.buffering, ProcessingState.ready: AudioProcessingState.ready, ProcessingState.completed: AudioProcessingState.completed}[state.processingState]!,
-      playing: state.playing, position: _player.position, bufferedPosition: _player.bufferedPosition, speed: _player.speed,
+      playing: state.playing, updatePosition: _player.position, bufferedPosition: _player.bufferedPosition, speed: _player.speed,
     ));
   }
 }
