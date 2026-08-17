@@ -22,9 +22,9 @@ class _RotatingAlbumState extends State<RotatingAlbum> with SingleTickerProvider
     if (s == null) return Container(color: AppTheme.bgColor, child: const Icon(Icons.music_note, size: 60, color: AppTheme.accentMint));
     if (s.albumArt != null && s.albumArt!.isNotEmpty) {
       if (s.isOnline) return CachedNetworkImage(imageUrl: s.albumArt!, fit: BoxFit.cover, placeholder: (_, __) => _ph(), errorWidget: (_, __, ___) => _ph());
-      if (s.albumArt!.startsWith('artwork_')) { final id = int.tryParse(s.albumArt!.split('_').last) ?? 0; return QueryArtworkWidget(id: id, type: ArtworkType.AUDIO, artworkWidth: widget.size.toInt(), artworkHeight: widget.size.toInt(), artworkFit: BoxFit.cover, nullArtworkWidget: _ph()); }
+      if (s.albumArt!.startsWith('artwork_')) { final id = int.tryParse(s.albumArt!.split('_').last) ?? 0; return QueryArtworkWidget(id: id, type: ArtworkType.AUDIO, artworkWidth: widget.size, artworkHeight: widget.size, artworkFit: BoxFit.cover, nullArtworkWidget: _ph()); }
     }
-    if (s.filePath != null) return QueryArtworkWidget(id: int.tryParse(s.id) ?? 0, type: ArtworkType.AUDIO, artworkWidth: widget.size.toInt(), artworkHeight: widget.size.toInt(), artworkFit: BoxFit.cover, nullArtworkWidget: _ph());
+    if (s.filePath != null) return QueryArtworkWidget(id: int.tryParse(s.id) ?? 0, type: ArtworkType.AUDIO, artworkWidth: widget.size, artworkHeight: widget.size, artworkFit: BoxFit.cover, nullArtworkWidget: _ph());
     return _ph();
   }
   Widget _ph() => Container(color: AppTheme.bgColor, child: const Icon(Icons.music_note, size: 60, color: AppTheme.accentMint));
