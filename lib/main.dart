@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:audio_service/audio_service.dart';
 import 'theme/app_theme.dart';
 import 'providers/music_provider.dart';
 import 'services/audio_player_service.dart';
@@ -36,15 +35,7 @@ class _ChumianMusicAppState extends State<ChumianMusicApp> {
 
   Future<void> _init() async {
     try {
-      final audioHandler = await AudioService.init(
-        builder: () => MusicAudioHandler(),
-        config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.chumian.music.channel',
-          androidNotificationChannelName: '初眠音乐播放',
-          androidNotificationOngoing: true,
-          androidStopForegroundOnPause: true,
-        ),
-      );
+      final audioHandler = MusicAudioHandler();
       final provider = MusicProvider();
       await provider.init(audioHandler);
       if (mounted) {
@@ -85,7 +76,8 @@ class _ChumianMusicAppState extends State<ChumianMusicApp> {
               SizedBox(height: 24),
               CircularProgressIndicator(color: AppTheme.accentMint),
               SizedBox(height: 16),
-              Text('正在加载...', style: TextStyle(color: AppTheme.textSecondary)),
+              Text('正在加载...',
+                  style: TextStyle(color: AppTheme.textSecondary)),
             ],
           ),
         ),
@@ -101,14 +93,23 @@ class _ChumianMusicAppState extends State<ChumianMusicApp> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+                const Icon(Icons.error_outline,
+                    size: 64, color: Colors.redAccent),
                 const SizedBox(height: 16),
-                const Text('初始化失败', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                const Text('初始化失败',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary)),
                 const SizedBox(height: 8),
-                Text(_error ?? '未知错误', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13), textAlign: TextAlign.center),
+                Text(_error ?? '未知错误',
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 13),
+                    textAlign: TextAlign.center),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentMint),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentMint),
                   onPressed: () {
                     setState(() {
                       _initialized = false;
@@ -117,7 +118,8 @@ class _ChumianMusicAppState extends State<ChumianMusicApp> {
                     });
                     _init();
                   },
-                  child: const Text('重试', style: TextStyle(color: Colors.white)),
+                  child: const Text('重试',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
