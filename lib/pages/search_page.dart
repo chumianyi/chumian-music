@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/music_provider.dart';
 import '../widgets/song_tile.dart';
+import 'full_player_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -21,8 +22,8 @@ class _SearchPageState extends State<SearchPage> {
       Expanded(child: p.isSearching ? const Center(child: CircularProgressIndicator(color: AppTheme.accentMint))
         : _controller.text.isEmpty ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: const [Icon(Icons.search, size: 64, color: AppTheme.textSecondary), SizedBox(height: 16), Text('输入关键词搜索音乐', style: TextStyle(color: AppTheme.textSecondary))]))
         : ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 100), children: [
-          if (p.searchOnlineResults.isNotEmpty) ...[_section('在线音乐', p.searchOnlineResults.length), const SizedBox(height: 8), ...p.searchOnlineResults.map((s) => Padding(padding: const EdgeInsets.only(bottom: 8), child: SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () => p.playSong(s, playlist: p.searchOnlineResults))))],
-          if (p.searchLocalResults.isNotEmpty) ...[const SizedBox(height: 16), _section('本地音乐', p.searchLocalResults.length), const SizedBox(height: 8), ...p.searchLocalResults.map((s) => Padding(padding: const EdgeInsets.only(bottom: 8), child: SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () => p.playSong(s, playlist: p.searchLocalResults))))],
+          if (p.searchOnlineResults.isNotEmpty) ...[_section('在线音乐', p.searchOnlineResults.length), const SizedBox(height: 8), ...p.searchOnlineResults.map((s) => Padding(padding: const EdgeInsets.only(bottom: 8), child: SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () async { await p.playSong(s, playlist: p.searchOnlineResults); if (context.mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => const FullPlayerPage())); })))],
+          if (p.searchLocalResults.isNotEmpty) ...[const SizedBox(height: 16), _section('本地音乐', p.searchLocalResults.length), const SizedBox(height: 8), ...p.searchLocalResults.map((s) => Padding(padding: const EdgeInsets.only(bottom: 8), child: SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () async { await p.playSong(s, playlist: p.searchLocalResults); if (context.mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => const FullPlayerPage())); })))],
           if (p.searchOnlineResults.isEmpty && p.searchLocalResults.isEmpty) const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('未找到相关结果', style: TextStyle(color: AppTheme.textSecondary)))),
         ])),
     ]));

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/music_provider.dart';
 import '../widgets/song_tile.dart';
+import 'full_player_page.dart';
 
 class LocalMusicPage extends StatelessWidget {
   const LocalMusicPage({super.key});
@@ -20,7 +21,7 @@ class LocalMusicPage extends StatelessWidget {
         : !p.hasPermission ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.lock_outline, size: 64, color: AppTheme.textSecondary), const SizedBox(height: 16), const Text('需要存储权限来扫描本地音乐', style: TextStyle(color: AppTheme.textSecondary)), const SizedBox(height: 12), NeuButton(onPressed: () => p.loadLocalSongs(), child: const Text('授予权限'))]))
         : p.localSongs.isEmpty ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.library_music, size: 64, color: AppTheme.textSecondary), const SizedBox(height: 16), const Text('未找到本地音乐文件', style: TextStyle(color: AppTheme.textSecondary)), const SizedBox(height: 12), NeuButton(onPressed: () => p.loadLocalSongs(), child: const Text('重新扫描'))]))
         : RefreshIndicator(color: AppTheme.accentMint, onRefresh: () => p.loadLocalSongs(), child: ListView.separated(padding: const EdgeInsets.fromLTRB(16, 8, 16, 100), itemCount: p.localSongs.length, separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, i) { final s = p.localSongs[i]; return SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () => p.playSong(s, playlist: p.localSongs)); }))),
+          itemBuilder: (_, i) { final s = p.localSongs[i]; return SongTile(song: s, isPlaying: p.currentSong?.id == s.id, onTap: () async { await p.playSong(s, playlist: p.localSongs); if (context.mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => const FullPlayerPage())); }); }))),
     ]));
   }
 }

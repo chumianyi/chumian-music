@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../providers/music_provider.dart';
 import '../services/online_music_service.dart';
 import '../widgets/song_tile.dart';
+import 'full_player_page.dart';
 
 class OnlineMusicPage extends StatelessWidget {
   const OnlineMusicPage({super.key});
@@ -141,8 +142,17 @@ class OnlineMusicPage extends StatelessWidget {
                           return SongTile(
                             song: s,
                             isPlaying: p.currentSong?.id == s.id,
-                            onTap: () =>
-                                p.playSong(s, playlist: p.onlineSongs),
+                            onTap: () async {
+                              await p.playSong(s, playlist: p.onlineSongs);
+                              if (context.mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const FullPlayerPage()),
+                                );
+                              }
+                            },
                           );
                         },
                       ),

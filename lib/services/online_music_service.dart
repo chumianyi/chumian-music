@@ -24,6 +24,7 @@ class OnlineMusicService {
 
   // 歌单分类: id -> 名称
   static const Map<int, String> playlists = {
+    5042693964: '✨ 推荐',
     3778678: '热歌榜',
     3779629: '新歌榜',
     19723756: '飙升榜',

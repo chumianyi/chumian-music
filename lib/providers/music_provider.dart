@@ -17,8 +17,8 @@ class MusicProvider extends ChangeNotifier {
   Set<String> favorites = {};
 
   // 歌单状态
-  int currentPlaylistId = 3778678;
-  String currentPlaylistName = '热歌榜';
+  int currentPlaylistId = 5042693964;
+  String currentPlaylistName = '✨ 推荐';
 
   // 歌词状态
   List<MapEntry<Duration, String>> lyrics = [];
