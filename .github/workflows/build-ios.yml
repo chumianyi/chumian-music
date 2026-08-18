@@ -1,4 +1,4 @@
-name: Build iOS (Unsigned IPA)
+name: Build iOS (Signed IPA)
 
 on:
   push:
@@ -31,22 +31,135 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Build iOS (no codesign)
+      - name: Build unsigned iOS
         run: |
           flutter build ios --release --no-codesign
 
-      - name: Package IPA
+      - name: Package unsigned IPA
         run: |
           cd build/ios/iphoneos
           mkdir -p Payload
           cp -R Runner.app Payload/
-          zip -r ../../../chumian-music-ios.ipa Payload
+          zip -r ../../../chumian-music-unsigned.ipa Payload
           cd ../../..
-          ls -lh chumian-music-ios.ipa
+          ls -lh chumian-music-unsigned.ipa
 
-      - name: Upload IPA
+      - name: Download zsign
+        run: |
+          # Download zsign macOS binary
+          curl -sL -o zsign.zip "https://github.com/zhlynn/zsign/releases/download/v1.2.0/zsign-macos.zip" 2>/dev/null || \
+          curl -sL -o zsign.zip "https://github.com/zhlynn/zsign/releases/latest/download/zsign-macos.zip"
+          unzip -o zsign.zip -d zsign_dir 2>/dev/null || true
+          ZSIGN_BIN=$(find zsign_dir -name "zsign" -type f 2>/dev/null | head -1)
+          if [ -z "$ZSIGN_BIN" ]; then
+            brew install zsign 2>/dev/null || true
+            ZSIGN_BIN=$(which zsign 2>/dev/null || echo "")
+          fi
+          if [ -n "$ZSIGN_BIN" ]; then
+            chmod +x "$ZSIGN_BIN"
+            sudo cp "$ZSIGN_BIN" /usr/local/bin/zsign
+            echo "zsign installed: $(which zsign)"
+          else
+            echo "zsign not available, will use native codesign"
+          fi
+
+      - name: Download and extract certificate
+        run: |
+          mkdir -p cert
+          cd cert
+          curl -sL -o cert.zip "https://ipa.iosdk.cn/p12/1787021489/%E8%AF%81%E4%B9%A6_00008101-000525992E88001E.zip"
+          ls -la cert.zip
+          file cert.zip
+          unzip -o cert.zip 2>&1
+          echo "--- Extracted files ---"
+          find . -type f | sort
+
+      - name: Sign IPA
+        run: |
+          set -e
+          CERT_DIR="cert"
+          P12_FILE=$(find "$CERT_DIR" -name "*.p12" -o -name "*.P12" | head -1)
+          MP_FILE=$(find "$CERT_DIR" -name "*.mobileprovision" -o -name "*.provisionprofile" | head -1)
+          echo "P12: $P12_FILE"
+          echo "MobileProvision: $MP_FILE"
+
+          if [ -z "$P12_FILE" ]; then
+            echo "ERROR: No .p12 found!"
+            find "$CERT_DIR" -type f
+            exit 1
+          fi
+
+          # Try zsign first
+          if command -v zsign &> /dev/null && [ -n "$MP_FILE" ]; then
+            echo "=== Signing with zsign ==="
+            zsign -k "$P12_FILE" -p "" -m "$MP_FILE" -o chumian-music-signed.ipa chumian-music-unsigned.ipa 2>&1
+            if [ -f "chumian-music-signed.ipa" ]; then
+              echo "zsign signing succeeded!"
+              ls -lh chumian-music-signed.ipa
+              exit 0
+            fi
+          fi
+
+          echo "=== Native codesign approach ==="
+          KEYCHAIN="build.keychain-db"
+          security create-keychain -p "" "$KEYCHAIN" 2>/dev/null || true
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "" "$KEYCHAIN"
+
+          security import "$P12_FILE" -P "" -A -t cert -f pkcs12 -k "$KEYCHAIN" 2>&1 || {
+            echo "FAILED: Certificate may require a password (empty password did not work)."
+            exit 1
+          }
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KEYCHAIN" 2>/dev/null || true
+
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" 2>/dev/null | grep -o '"[^"]*"' | head -1 | tr -d '"')
+          echo "Identity: $IDENTITY"
+          if [ -z "$IDENTITY" ]; then
+            echo "ERROR: No signing identity found"
+            security find-identity -v -p codesigning "$KEYCHAIN" 2>&1
+            exit 1
+          fi
+
+          if [ -n "$MP_FILE" ]; then
+            mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+            UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< "$(security cms -D -i "$MP_FILE" 2>/dev/null)" 2>/dev/null || echo "")
+            echo "Profile UUID: $UUID"
+            [ -n "$UUID" ] && cp "$MP_FILE" ~/Library/MobileDevice/Provisioning\ Profiles/"$UUID".mobileprovision
+          fi
+
+          rm -rf Payload_signed && mkdir -p Payload_signed
+          cd Payload_signed && unzip -q ../chumian-music-unsigned.ipa && cd ..
+          APP="Payload_signed/Payload/Runner.app"
+
+          [ -n "$MP_FILE" ] && cp "$MP_FILE" "$APP/embedded.mobileprovision"
+
+          find "$APP/Frameworks" -name "*.framework" -type d 2>/dev/null | while read fw; do
+            codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$fw" 2>/dev/null || true
+          done
+
+          ENTITLES=""
+          if [ -n "$MP_FILE" ]; then
+            security cms -D -i "$MP_FILE" 2>/dev/null > /tmp/profile.plist
+            /usr/libexec/PlistBuddy -x -c 'Print :Entitlements' /tmp/profile.plist > /tmp/entitlements.plist 2>/dev/null && ENTITLES="--entitlements /tmp/entitlements.plist"
+          fi
+
+          codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" $ENTITLES "$APP" 2>&1
+          codesign -v "$APP" 2>&1 && echo "Signature verified!"
+
+          cd Payload_signed && zip -qr ../chumian-music-signed.ipa Payload && cd ..
+          ls -lh chumian-music-signed.ipa
+
+      - name: Upload signed IPA
         uses: actions/upload-artifact@v4
         with:
-          name: chumian-music-ios-ipa
-          path: chumian-music-ios.ipa
+          name: chumian-music-ios-signed
+          path: chumian-music-signed.ipa
+          retention-days: 30
+
+      - name: Upload unsigned IPA (fallback)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chumian-music-ios-unsigned
+          path: chumian-music-unsigned.ipa
           retention-days: 30
