@@ -43,6 +43,11 @@ class MusicProvider extends ChangeNotifier {
     audioHandler.positionStream.listen((pos) {
       _updateLyricIndex(pos);
     });
+    // 通知栏切歌时自动加载歌词
+    audioHandler.currentSongStream.listen((song) {
+      notifyListeners();
+      if (song != null) loadLyrics(song);
+    });
     loadPlaylist(currentPlaylistId, currentPlaylistName);
     loadLocalSongs();
   }
