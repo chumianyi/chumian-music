@@ -52,4 +52,32 @@ class Song {
       url: url ?? this.url,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'artist': artist,
+        'album': album,
+        'duration': duration.inMilliseconds,
+        'filePath': filePath,
+        'coverUrl': coverUrl,
+        'lyricsUrl': lyricsUrl,
+        'isOnline': isOnline,
+        'fileSize': fileSize,
+        'url': url,
+      };
+
+  factory Song.fromJson(Map<String, dynamic> j) => Song(
+        id: j['id'] ?? '',
+        title: j['title'] ?? '未知',
+        artist: j['artist'] ?? '未知',
+        album: j['album'] ?? '未知',
+        duration: Duration(milliseconds: j['duration'] ?? 0),
+        filePath: j['filePath'],
+        coverUrl: j['coverUrl'],
+        lyricsUrl: j['lyricsUrl'],
+        isOnline: j['isOnline'] ?? false,
+        fileSize: j['fileSize'],
+        url: j['url'],
+      );
 }

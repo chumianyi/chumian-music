@@ -17,15 +17,15 @@ class SongTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: NeuCard(
         onTap: onTap,
         child: ListTile(
           leading: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: SizedBox(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               child: _buildCover(),
             ),
           ),
@@ -34,6 +34,7 @@ class SongTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                   fontWeight: FontWeight.w600,
+                  fontSize: 14,
                   color: isPlaying
                       ? const Color(0xFF6B8E7F)
                       : const Color(0xFF333333))),
@@ -41,7 +42,7 @@ class SongTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style:
-                  const TextStyle(color: Color(0xFF888888), fontSize: 12)),
+                  const TextStyle(color: Color(0xFF888888), fontSize: 11)),
           trailing: isPlaying
               ? const Icon(Icons.graphic_eq, color: Color(0xFF6B8E7F))
               : const Icon(Icons.play_arrow, color: Color(0xFF7C8BA0)),
@@ -58,21 +59,21 @@ class SongTile extends StatelessWidget {
         placeholder: (_, __) => Container(
           color: const Color(0xFFE0E5EC),
           child: const Icon(Icons.music_note,
-              color: Color(0xFF7C8BA0), size: 24),
+              color: Color(0xFF7C8BA0), size: 20),
         ),
         errorWidget: (_, __, ___) => Container(
           color: const Color(0xFFE0E5EC),
           child: Icon(
               song.isOnline ? Icons.cloud : Icons.music_note,
               color: const Color(0xFF7C8BA0),
-              size: 24),
+              size: 20),
         ),
       );
     }
     return Container(
       color: const Color(0xFFE0E5EC),
       child: Icon(song.isOnline ? Icons.cloud : Icons.music_note,
-          color: const Color(0xFF7C8BA0), size: 24),
+          color: const Color(0xFF7C8BA0), size: 20),
     );
   }
 

@@ -20,8 +20,8 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: AppTheme.bgColor,
       body: SafeArea(child: Column(children: [Expanded(child: _pages[_currentIndex]), const MiniPlayer()])),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(color: AppTheme.bgColor, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, -4), blurRadius: 10)]),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(color: AppTheme.bgColor, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, -3), blurRadius: 8)]),
         child: SafeArea(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_navItem(Icons.music_note, '音乐', 0), _navItem(Icons.library_music, '播放列表', 1), _navItem(Icons.search, '搜索', 2)])),
       ),
     );
@@ -29,11 +29,11 @@ class _MainPageState extends State<MainPage> {
   Widget _navItem(IconData icon, String label, int index) {
     final sel = _currentIndex == index;
     return GestureDetector(onTap: () => setState(() => _currentIndex = index),
-      child: NeuBox(pressed: sel, borderRadius: 14, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), color: sel ? AppTheme.accentMint.withOpacity(0.3) : null,
+      child: NeuBox(pressed: sel, borderRadius: 12, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), color: sel ? AppTheme.accentMint.withOpacity(0.3) : null,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: sel ? AppTheme.accentMint : AppTheme.textSecondary, size: 24),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: sel ? AppTheme.textPrimary : AppTheme.textSecondary, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+          Icon(icon, color: sel ? AppTheme.accentMint : AppTheme.textSecondary, size: 20),
+          const SizedBox(height: 3),
+          Text(label, style: TextStyle(fontSize: 10, color: sel ? AppTheme.textPrimary : AppTheme.textSecondary, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
         ])));
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
@@ -19,7 +20,6 @@ class MusicAudioHandler {
   }
 
   Future<void> _init() async {
-    // 音频会话配置：处理音频焦点、耳机拔出等
     try {
       final session = await AudioSession.instance;
       await session.configure(const AudioSessionConfiguration.music());
@@ -41,21 +41,22 @@ class MusicAudioHandler {
       session.becomingNoisyEventStream.listen((_) {
         _player.pause();
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('audio_session init error: $e');
+    }
 
-    // 播放完成自动下一首
     _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
+        debugPrint('playback completed, skipping to next');
         skipToNext();
       }
     });
 
-    // 播放状态变化时更新通知
-    _player.playingStream.listen((_) {
+    _player.playingStream.listen((playing) {
+      debugPrint('playing state: $playing');
       _updateNotification();
     });
 
-    // 原生通知按钮 → Dart
     if (Platform.isAndroid) {
       _channel.setMethodCallHandler((call) async {
         switch (call.method) {
@@ -76,8 +77,20 @@ class MusicAudioHandler {
     }
   }
 
-  Future<void> play() => _player.play();
-  Future<void> pause() => _player.pause();
+  Future<void> play() async {
+    debugPrint('play() called');
+    try {
+      await _player.play();
+    } catch (e) {
+      debugPrint('play error: $e');
+    }
+  }
+
+  Future<void> pause() async {
+    debugPrint('pause() called');
+    await _player.pause();
+  }
+
   Future<void> seek(Duration position) => _player.seek(position);
 
   Future<void> stop() async {
@@ -88,16 +101,19 @@ class MusicAudioHandler {
   Future<void> skipToNext() async {
     if (_queue.isEmpty) return;
     _currentIndex = (_currentIndex + 1) % _queue.length;
+    debugPrint('skipToNext: index=$_currentIndex, song=${_queue[_currentIndex].title}');
     await _playCurrent();
   }
 
   Future<void> skipToPrevious() async {
     if (_queue.isEmpty) return;
     _currentIndex = (_currentIndex - 1 + _queue.length) % _queue.length;
+    debugPrint('skipToPrevious: index=$_currentIndex, song=${_queue[_currentIndex].title}');
     await _playCurrent();
   }
 
   Future<void> playSong(Song song, {List<Song>? playlist}) async {
+    debugPrint('playSong: ${song.title}, playlist=${playlist?.length}');
     if (playlist != null && playlist.isNotEmpty) {
       _queue.clear();
       _queue.addAll(playlist);
@@ -118,15 +134,27 @@ class MusicAudioHandler {
   Future<void> _playCurrent() async {
     if (_currentIndex < 0 || _currentIndex >= _queue.length) return;
     final song = _queue[_currentIndex];
+    debugPrint('_playCurrent: ${song.title}, url=${song.url ?? song.filePath}');
     _currentSongController.add(song);
+
+    final url = song.url ?? song.filePath;
+    if (url == null || url.isEmpty) {
+      debugPrint('ERROR: empty url for song ${song.title}');
+      return;
+    }
+
     try {
-      final url = song.url ?? song.filePath;
-      if (url != null && url.isNotEmpty) {
-        await _player.setUrl(url);
-        await _player.play();
-        _startForeground(song);
-      }
-    } catch (_) {}
+      // 关键：先停止当前，再设置新源，再播放
+      await _player.stop();
+      debugPrint('stopped previous, setting new source...');
+      await _player.setAudioSource(AudioSource.uri(Uri.parse(url)));
+      debugPrint('source set, starting playback...');
+      await _player.play();
+      debugPrint('playback started for ${song.title}');
+      _startForeground(song);
+    } catch (e) {
+      debugPrint('ERROR playing ${song.title}: $e');
+    }
   }
 
   Future<void> seekRelative(int seconds) async {
@@ -141,7 +169,6 @@ class MusicAudioHandler {
     }
   }
 
-  // === 原生前台服务 ===
   Future<void> _startForeground(Song song) async {
     if (!Platform.isAndroid) return;
     try {
@@ -151,7 +178,9 @@ class MusicAudioHandler {
         'coverUrl': song.coverUrl,
         'isPlaying': true,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('startForeground error: $e');
+    }
   }
 
   Future<void> _updateNotification() async {

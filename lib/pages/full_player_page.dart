@@ -29,18 +29,18 @@ class _FullPlayerPageState extends State<FullPlayerPage> {
         backgroundColor: AppTheme.bgColor,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(children: [
               // 顶部栏
               SizedBox(
-                height: 56,
+                height: 48,
                 child: Row(children: [
                   NeuButton(
                     onPressed: () => Navigator.pop(context),
-                    padding: const EdgeInsets.all(10),
-                    borderRadius: 14,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 12,
                     child: const Icon(Icons.keyboard_arrow_down,
-                        color: AppTheme.textPrimary, size: 28),
+                        color: AppTheme.textPrimary, size: 24),
                   ),
                   const Spacer(),
                   Column(
@@ -62,10 +62,10 @@ class _FullPlayerPageState extends State<FullPlayerPage> {
                   const Spacer(),
                   NeuButton(
                     onPressed: () {},
-                    padding: const EdgeInsets.all(10),
-                    borderRadius: 14,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 12,
                     child: const Icon(Icons.more_horiz,
-                        color: AppTheme.textPrimary, size: 24),
+                        color: AppTheme.textPrimary, size: 20),
                   ),
                 ]),
               ),
@@ -77,100 +77,100 @@ class _FullPlayerPageState extends State<FullPlayerPage> {
                   child: _showLyrics
                       ? _buildLyricsView(p)
                       : RotatingAlbum(
-                          song: s, size: 260, playing: p.isPlaying),
+                          song: s, size: 180, playing: p.isPlaying),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               // 封面/歌词切换
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _viewToggle(Icons.album, '封面', !_showLyrics,
                       () => setState(() => _showLyrics = false)),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   _viewToggle(Icons.lyrics, '歌词', _showLyrics,
                       () => setState(() => _showLyrics = true)),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               // 歌名歌手
               Text(
                 s?.title ?? '未在播放',
                 style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(s?.artist ?? '',
                   style: const TextStyle(
-                      fontSize: 14, color: AppTheme.textSecondary)),
-              const SizedBox(height: 24),
+                      fontSize: 13, color: AppTheme.textSecondary)),
+              const SizedBox(height: 16),
               // 进度条
               _progress(p),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               // 控制按钮
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   NeuButton(
                     onPressed: () => p.previous(),
-                    padding: const EdgeInsets.all(14),
-                    borderRadius: 20,
+                    padding: const EdgeInsets.all(10),
+                    borderRadius: 16,
                     child: const Icon(Icons.skip_previous,
-                        color: AppTheme.textPrimary, size: 28),
+                        color: AppTheme.textPrimary, size: 22),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   NeuButton(
                     onPressed: () => p.seekBackward(),
-                    padding: const EdgeInsets.all(12),
-                    borderRadius: 18,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 14,
                     child: const Icon(Icons.replay_10,
-                        color: AppTheme.textPrimary, size: 24),
+                        color: AppTheme.textPrimary, size: 18),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   NeuButton(
                     onPressed: () => p.togglePlay(),
-                    padding: const EdgeInsets.all(20),
-                    borderRadius: 30,
+                    padding: const EdgeInsets.all(14),
+                    borderRadius: 24,
                     color: AppTheme.accentMint,
                     child: Icon(
                         p.isPlaying ? Icons.pause : Icons.play_arrow,
                         color: Colors.white,
-                        size: 40),
+                        size: 30),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   NeuButton(
                     onPressed: () => p.seekForward(),
-                    padding: const EdgeInsets.all(12),
-                    borderRadius: 18,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 14,
                     child: const Icon(Icons.forward_10,
-                        color: AppTheme.textPrimary, size: 24),
+                        color: AppTheme.textPrimary, size: 18),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   NeuButton(
                     onPressed: () => p.next(),
-                    padding: const EdgeInsets.all(14),
-                    borderRadius: 20,
+                    padding: const EdgeInsets.all(10),
+                    borderRadius: 16,
                     child: const Icon(Icons.skip_next,
-                        color: AppTheme.textPrimary, size: 28),
+                        color: AppTheme.textPrimary, size: 22),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               // 收藏/下载
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   NeuButton(
                     onPressed: () {
-                      if (s != null) p.toggleFavorite(s.id);
+                      if (s != null) p.toggleFavorite(s);
                     },
-                    padding: const EdgeInsets.all(10),
-                    borderRadius: 16,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 14,
                     child: Icon(
                         s != null && p.isFavorite(s.id)
                             ? Icons.favorite
@@ -178,22 +178,22 @@ class _FullPlayerPageState extends State<FullPlayerPage> {
                         color: s != null && p.isFavorite(s.id)
                             ? Colors.redAccent
                             : AppTheme.textSecondary,
-                        size: 22),
+                        size: 18),
                   ),
-                  const SizedBox(width: 32),
+                  const SizedBox(width: 24),
                   NeuButton(
                     onPressed: () => ScaffoldMessenger.of(context)
                         .showSnackBar(const SnackBar(
                             content: Text('下载功能开发中'),
                             behavior: SnackBarBehavior.floating)),
-                    padding: const EdgeInsets.all(10),
-                    borderRadius: 16,
+                    padding: const EdgeInsets.all(8),
+                    borderRadius: 14,
                     child: const Icon(Icons.download,
-                        color: AppTheme.textSecondary, size: 22),
+                        color: AppTheme.textSecondary, size: 18),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
             ]),
           ),
         ),
@@ -295,7 +295,7 @@ class _FullPlayerPageState extends State<FullPlayerPage> {
               children: [
                 SliderTheme(
                   data: SliderThemeData(
-                    trackHeight: 6,
+                    trackHeight: 4,
                     thumbShape: const RoundSliderThumbShape(
                         enabledThumbRadius: 8),
                     activeTrackColor: AppTheme.accentMint,

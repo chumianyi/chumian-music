@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/song.dart';
 import '../services/audio_player_service.dart';
 import '../services/online_music_service.dart';
@@ -14,7 +16,7 @@ class MusicProvider extends ChangeNotifier {
   List<Song> localSongs = [];
   List<Song> searchOnlineResults = [];
   List<Song> searchLocalResults = [];
-  Set<String> favorites = {};
+  List<Song> favoriteSongs = [];
 
   // 歌单状态
   int currentPlaylistId = 5042693964;
@@ -43,14 +45,50 @@ class MusicProvider extends ChangeNotifier {
     audioHandler.positionStream.listen((pos) {
       _updateLyricIndex(pos);
     });
-    // 通知栏切歌时自动加载歌词
     audioHandler.currentSongStream.listen((song) {
       notifyListeners();
       if (song != null) loadLyrics(song);
     });
+    await _loadFavorites();
     loadPlaylist(currentPlaylistId, currentPlaylistName);
     loadLocalSongs();
   }
+
+  // === 收藏持久化 ===
+  Future<void> _loadFavorites() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = prefs.getString('favorites');
+      if (data != null && data.isNotEmpty) {
+        final List list = jsonDecode(data);
+        favoriteSongs =
+            list.map((e) => Song.fromJson(e as Map<String, dynamic>)).toList();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveFavorites() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data =
+          jsonEncode(favoriteSongs.map((s) => s.toJson()).toList());
+      await prefs.setString('favorites', data);
+    } catch (_) {}
+  }
+
+  void toggleFavorite(Song song) {
+    final idx = favoriteSongs.indexWhere((s) => s.id == song.id);
+    if (idx >= 0) {
+      favoriteSongs.removeAt(idx);
+    } else {
+      favoriteSongs.add(song);
+    }
+    _saveFavorites();
+    notifyListeners();
+  }
+
+  bool isFavorite(String songId) =>
+      favoriteSongs.any((s) => s.id == songId);
 
   void _updateLyricIndex(Duration position) {
     if (lyrics.isEmpty) return;
@@ -125,7 +163,6 @@ class MusicProvider extends ChangeNotifier {
     }
     await audioHandler.playSong(song, playlist: playlist);
     notifyListeners();
-    // 加载歌词
     loadLyrics(song);
   }
 
@@ -178,15 +215,4 @@ class MusicProvider extends ChangeNotifier {
   Future<void> seekBackward() async {
     await audioHandler.seekRelative(-10);
   }
-
-  void toggleFavorite(String songId) {
-    if (favorites.contains(songId)) {
-      favorites.remove(songId);
-    } else {
-      favorites.add(songId);
-    }
-    notifyListeners();
-  }
-
-  bool isFavorite(String songId) => favorites.contains(songId);
 }

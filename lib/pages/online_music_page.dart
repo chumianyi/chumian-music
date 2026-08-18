@@ -33,10 +33,10 @@ class OnlineMusicPage extends StatelessWidget {
         ),
         // 歌单标签栏
         SizedBox(
-          height: 40,
+          height: 36,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: OnlineMusicService.playlists.length,
             itemBuilder: (_, i) {
               final entry =
@@ -47,12 +47,12 @@ class OnlineMusicPage extends StatelessWidget {
                 child: NeuButton(
                   onPressed: () => p.loadPlaylist(entry.key, entry.value),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  borderRadius: 20,
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  borderRadius: 16,
                   color: selected ? AppTheme.accentMint.withOpacity(0.3) : null,
                   child: Text(entry.value,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight:
                             selected ? FontWeight.bold : FontWeight.normal,
                         color: selected
